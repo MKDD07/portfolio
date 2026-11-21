@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NØR Studio — GSAP Expanding Header Dot</title>
+
+  <!-- Google Fonts: Syne (Editorial Display) & Plus Jakarta Sans (Clean UI/Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Custom Configuration -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Syne"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            canvas: '#F5F4F0',
+            ink: '#0E0E11',
+            accent: '#FF4D2D',
+            muted: '#6E6D6A',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- GSAP Core via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* Base smoothness & GPU optimization for animation layers */
+    html, body {
+      overflow-x: hidden;
+      background-color: #F5F4F0;
+      color: #0E0E11;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Subtle architectural grid background for hero */
+    .bg-editorial-grid {
+      background-image:
+        linear-gradient(to right, rgba(14, 14, 17, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(14, 14, 17, 0.05) 1px, transparent 1px);
+      background-size: 64px 64px;
+    }
+
+    /* Subtle dark grid inside expanded overlay */
+    .bg-overlay-grid {
+      background-image:
+        linear-gradient(to right, rgba(245, 244, 240, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(245, 244, 240, 0.04) 1px, transparent 1px);
+      background-size: 72px 72px;
+    }
+
+    /* GPU acceleration hints for silky 60fps scaling */
+    #dot-expander {
+      will-change: transform;
+      transform-origin: center center;
+    }
+
+    .nav-link-text {
+      will-change: transform, opacity;
+    }
+
+    /* Subtle dimming of sibling links on hover inside the menu */
+    .nav-list:hover .nav-item-btn:not(:hover) {
+      opacity: 0.35;
+    }
+
+    .nav-item-btn {
+      transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Gentle pulse ring around closed dot */
+    @keyframes softPulse {
+      0% { transform: scale(1); opacity: 0.45; }
+      70% { transform: scale(1.65); opacity: 0; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+    .dot-pulse {
+      animation: softPulse 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+  </style>
+</head>
+<body class="font-sans selection:bg-accent selection:text-white">
+
+  <!-- ===================================================================== -->
+  <!-- 1. EXPANDING CIRCULAR BACKDROP LAYER (Anchored dynamically to dot)    -->
+  <!-- ===================================================================== -->
+  <div
+    id="dot-expander"
+    aria-hidden="true"
+    class="fixed top-0 left-0 w-11 h-11 rounded-full bg-ink pointer-events-none z-30 opacity-0"
+  ></div>
+
+  <!-- ===================================================================== -->
+  <!-- 2. FIXED MINIMALIST HEADER                                            -->
+  <!-- ===================================================================== -->
+  <header
+    id="main-header"
+    class="fixed top-0 left-0 right-0 z-50 px-5 sm:px-8 md:px-12 py-5 sm:py-6 flex items-center justify-between pointer-events-none"
+  >
+    <!-- Left Side: Interactive Magnetic Dot Button + Clean Label -->
+    <div class="flex items-center gap-3.5 sm:gap-4 pointer-events-auto">
+      <div id="magnetic-wrap" class="relative flex items-center justify-center p-1 -m-1">
+        <!-- Subtle ambient pulse ring (hidden when open) -->
+        <span
+          id="dot-pulse-ring"
+          class="dot-pulse absolute w-11 h-11 rounded-full border border-ink/35 pointer-events-none"
+        ></span>
+
+        <!-- Primary Circular Dot Trigger -->
+        <button
+          id="dot-trigger"
+          type="button"
+          aria-label="Toggle full-screen menu"
+          aria-expanded="false"
+          aria-controls="nav-overlay"
+          class="group relative w-11 h-11 rounded-full bg-ink text-canvas flex items-center justify-center shadow-lg shadow-ink/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 cursor-pointer transition-shadow duration-300 hover:shadow-xl"
+        >
+          <!-- Inner Subtle Core Dot (visible when closed) -->
+          <span
+            id="dot-core"
+            class="w-2 h-2 rounded-full bg-canvas transition-transform duration-300 group-hover:scale-125"
+          ></span>
+
+          <!-- Morphing Close 'X' Lines (revealed when open) -->
+          <span
+            id="close-line-1"
+            class="absolute w-4 h-[1.75px] bg-ink rounded-full opacity-0"
+          ></span>
+          <span
+            id="close-line-2"
+            class="absolute w-4 h-[1.75px] bg-ink rounded-full opacity-0"
+          ></span>
+        </button>
+      </div>
+
+      <!-- Animated Label Container (Switches between "Menu" and "Close") -->
+      <button
+        id="label-trigger"
+        type="button"
+        class="relative h-5 overflow-hidden text-xs sm:text-sm font-semibold tracking-[0.16em] uppercase text-ink cursor-pointer select-none focus:outline-none"
+      >
+        <span id="label-menu" class="block leading-5">Menu</span>
+        <span id="label-close" class="block leading-5 text-canvas">Close</span>
+      </button>
+    </div>
+
+    <!-- Right Side: Minimal Brand Wordmark & Subtle CTA -->
+    <div class="flex items-center gap-4 sm:gap-6 pointer-events-auto">
+      <a
+        href="#top"
+        id="brand-wordmark"
+        class="font-display font-extrabold text-base sm:text-lg tracking-tight text-ink transition-colors duration-300"
+      >
+        NØR<span class="text-accent">.</span>STUDIO
+      </a>
+
+      <button
+        id="header-cta"
+        type="button"
+        class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-ink/15 bg-canvas/80 backdrop-blur-md text-xs font-semibold tracking-wide text-ink hover:border-accent hover:text-accent transition-all duration-300 cursor-pointer"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span>Available Q4</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- 3. FULL-SCREEN NAVIGATION OVERLAY (Revealed inside expanded dot)      -->
+  <!-- ===================================================================== -->
+  <nav
+    id="nav-overlay"
+    aria-label="Primary Navigation"
+    class="fixed inset-0 z-40 invisible pointer-events-none bg-overlay-grid text-canvas flex flex-col justify-between px-6 sm:px-10 md:px-16 pt-28 pb-8 sm:pt-32 sm:pb-12 overflow-y-auto"
+  >
+    <!-- Main Two-Column Editorial Grid -->
+    <div class="w-full max-w-7xl mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-end">
+
+      <!-- Left Column: Large Editorial Navigation Links -->
+      <div class="lg:col-span-8">
+        <p class="overlay-meta text-[11px] font-semibold uppercase tracking-[0.22em] text-canvas/45 mb-5 sm:mb-7">
+          Navigation — 01 / 05
+        </p>
+
+        <ul class="nav-list flex flex-col space-y-2 sm:space-y-3">
+          <!-- Nav Item 01 -->
+          <li class="overflow-hidden">
+            <button
+              type="button"
+              data-section="Work"
+              data-desc="Selected digital flagships, kinetic brand systems, and spatial web experiences."
+              class="nav-item-btn nav-link-text group w-full text-left flex items-baseline gap-4 sm:gap-6 py-1 cursor-pointer focus:outline-none"
+            >
+              <span class="text-xs sm:text-sm font-mono text-accent font-semibold">01</span>
+              <span class="font-display font-bold text-4xl sm:text-6xl md:text-7xl tracking-tight text-canvas group-hover:translate-x-3 transition-transform duration-300">
+                Work
+              </span>
+              <span class="hidden sm:inline-block ml-auto text-sm text-canvas/40 group-hover:text-accent transition-colors duration-300">
+                24 Projects ↗
+              </span>
+            </button>
+          </li>
+
+          <!-- Nav Item 02 -->
+          <li class="overflow-hidden">
+            <button
+              type="button"
+              data-section="Studio"
+              data-desc="An independent design & motion practice crafting tactile software for ambitious teams."
+              class="nav-item-btn nav-link-text group w-full text-left flex items-baseline gap-4 sm:gap-6 py-1 cursor-pointer focus:outline-none"
+            >
+              <span class="text-xs sm:text-sm font-mono text-accent font-semibold">02</span>
+              <span class="font-display font-bold text-4xl sm:text-6xl md:text-7xl tracking-tight text-canvas group-hover:translate-x-3 transition-transform duration-300">
+                Studio
+              </span>
+              <span class="hidden sm:inline-block ml-auto text-sm text-canvas/40 group-hover:text-accent transition-colors duration-300">
+                Culture & Ethos ↗
+              </span>
+            </button>
+          </li>
+
+          <!-- Nav Item 03 -->
+          <li class="overflow-hidden">
+            <button
+              type="button"
+              data-section="Capabilities"
+              data-desc="Creative direction, GSAP motion choreography, WebGL storytelling, and design systems."
+              class="nav-item-btn nav-link-text group w-full text-left flex items-baseline gap-4 sm:gap-6 py-1 cursor-pointer focus:outline-none"
+            >
+              <span class="text-xs sm:text-sm font-mono text-accent font-semibold">03</span>
+              <span class="font-display font-bold text-4xl sm:text-6xl md:text-7xl tracking-tight text-canvas group-hover:translate-x-3 transition-transform duration-300">
+                Capabilities
+              </span>
+              <span class="hidden sm:inline-block ml-auto text-sm text-canvas/40 group-hover:text-accent transition-colors duration-300">
+                Disciplines ↗
+              </span>
+            </button>
+          </li>
+
+          <!-- Nav Item 04 -->
+          <li class="overflow-hidden">
+            <button
+              type="button"
+              data-section="Journal"
+              data-desc="Essays on micro-interactions, typography in motion, and performant front-end craft."
+              class="nav-item-btn nav-link-text group w-full text-left flex items-baseline gap-4 sm:gap-6 py-1 cursor-pointer focus:outline-none"
+            >
+              <span class="text-xs sm:text-sm font-mono text-accent font-semibold">04</span>
+              <span class="font-display font-bold text-4xl sm:text-6xl md:text-7xl tracking-tight text-canvas group-hover:translate-x-3 transition-transform duration-300">
+                Journal
+              </span>
+              <span class="hidden sm:inline-block ml-auto text-sm text-canvas/40 group-hover:text-accent transition-colors duration-300">
+                Notes & Essays ↗
+              </span>
+            </button>
+          </li>
+
+          <!-- Nav Item 05 -->
+          <li class="overflow-hidden">
+            <button
+              type="button"
+              data-section="Contact"
+              data-desc="Have a bold idea or product launch ahead? Let's build something unforgettable."
+              class="nav-item-btn nav-link-text group w-full text-left flex items-baseline gap-4 sm:gap-6 py-1 cursor-pointer focus:outline-none"
+            >
+              <span class="text-xs sm:text-sm font-mono text-accent font-semibold">05</span>
+              <span class="font-display font-bold text-4xl sm:text-6xl md:text-7xl tracking-tight text-canvas group-hover:translate-x-3 transition-transform duration-300">
+                Contact
+              </span>
+              <span class="hidden sm:inline-block ml-auto text-sm text-canvas/40 group-hover:text-accent transition-colors duration-300">
+                Say Hello ↗
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Right Column: Dynamic Editorial Preview & Studio Metadata -->
+      <div class="lg:col-span-4 flex flex-col justify-between space-y-8 lg:pl-8 lg:border-l lg:border-canvas/10">
+        <!-- Dynamic Hover Context Card -->
+        <div class="overlay-meta rounded-2xl border border-canvas/10 bg-canvas/[0.03] p-6 backdrop-blur-sm">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
+              Preview
+            </span>
+            <span class="w-2 h-2 rounded-full bg-accent"></span>
+          </div>
+          <p id="nav-preview-desc" class="text-sm sm:text-base leading-relaxed text-canvas/80 min-h-[3.5rem]">
+            Selected digital flagships, kinetic brand systems, and spatial web experiences.
+          </p>
+        </div>
+
+        <!-- Direct Inquiries & Offices -->
+        <div class="overlay-meta grid grid-cols-2 lg:grid-cols-1 gap-6 text-sm">
+          <div>
+            <p class="text-[11px] uppercase tracking-[0.2em] text-canvas/40 mb-1.5">New Business</p>
+            <a
+              href="mailto:hello@norstudio.design"
+              class="text-canvas hover:text-accent transition-colors font-medium"
+            >
+              hello@norstudio.design
+            </a>
+          </div>
+          <div>
+            <p class="text-[11px] uppercase tracking-[0.2em] text-canvas/40 mb-1.5">Studios</p>
+            <p class="text-canvas/75 leading-relaxed">
+              Copenhagen &middot; Tokyo &middot; Remote
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Overlay Bar: Social Links & Keyboard Hint -->
+    <div class="overlay-meta w-full max-w-7xl mx-auto pt-8 mt-8 border-t border-canvas/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-canvas/50">
+      <div class="flex flex-wrap items-center gap-5 sm:gap-7 font-medium">
+        <a href="#social" class="social-link hover:text-canvas transition-colors">Instagram</a>
+        <a href="#social" class="social-link hover:text-canvas transition-colors">Are.na</a>
+        <a href="#social" class="social-link hover:text-canvas transition-colors">X / Twitter</a>
+        <a href="#social" class="social-link hover:text-canvas transition-colors">Read.cv</a>
+      </div>
+      <div class="flex items-center gap-2">
+        <span>Press</span>
+        <kbd class="px-2 py-0.5 rounded-md border border-canvas/20 bg-canvas/5 text-canvas/80 font-mono text-[11px]">ESC</kbd>
+        <span>to collapse</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- 4. MAIN PAGE HERO CONTENT (Behind the header & dot)                   -->
+  <!-- ===================================================================== -->
+  <main id="top" class="relative min-h-screen bg-editorial-grid flex flex-col justify-between px-5 sm:px-8 md:px-12 pt-28 pb-10 sm:pt-36 sm:pb-12">
+
+    <!-- Subtle Floating Pointer Hint near Top-Left Dot -->
+    <div class="hero-reveal max-w-7xl w-full mx-auto">
+      <div class="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-ink/[0.04] border border-ink/10 text-xs font-medium text-ink/80 mb-8 sm:mb-10">
+        <svg class="w-3.5 h-3.5 text-accent -rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+        <span>Click the <strong class="font-semibold text-ink">top-left dot</strong> to expand full space</span>
+      </div>
+    </div>
+
+    <!-- Editorial Hero Typography -->
+    <section class="max-w-7xl w-full mx-auto my-auto py-4">
+      <h1 class="hero-reveal font-display font-extrabold text-5xl sm:text-7xl md:text-8xl lg:text-[6.5rem] leading-[0.94] tracking-tight text-ink max-w-5xl">
+        Motion that
+        <span class="block text-ink/90">
+          expands <span class="italic font-normal text-accent">every</span> boundary.
+        </span>
+      </h1>
+
+      <div class="mt-10 sm:mt-14 grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
+        <p class="hero-reveal md:col-span-6 lg:col-span-5 text-base sm:text-lg text-muted leading-relaxed">
+          A tactile, GPU-accelerated spatial transition crafted with GSAP. Click the magnetic dot in the top-left header to watch a single point scale seamlessly across the entire viewport.
+        </p>
+
+        <div class="hero-reveal md:col-span-6 lg:col-span-7 flex flex-wrap items-center md:justify-end gap-4">
+          <button
+            id="hero-demo-btn"
+            type="button"
+            class="group inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-ink text-canvas text-sm font-semibold tracking-wide hover:bg-accent transition-colors duration-300 shadow-lg shadow-ink/10 cursor-pointer"
+          >
+            <span class="w-2.5 h-2.5 rounded-full bg-canvas group-hover:scale-125 transition-transform duration-300"></span>
+            <span>Experience Expansion</span>
+          </button>
+
+          <div class="px-5 py-3.5 rounded-full border border-ink/12 text-xs font-semibold uppercase tracking-[0.14em] text-ink/60">
+            60 FPS &middot; GSAP Expo Ease
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Minimal Editorial Metadata -->
+    <footer class="hero-reveal max-w-7xl w-full mx-auto pt-10 mt-10 border-t border-ink/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-muted">
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-2 h-2 rounded-full bg-accent"></span>
+        <span class="font-medium text-ink/80">Interactive Spatial Header Concept</span>
+      </div>
+      <div class="flex items-center gap-6">
+        <span id="viewport-indicator" class="font-mono text-[11px] uppercase tracking-wider">Viewport Ready</span>
+        <span>&copy; 2026 NØR Studio</span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- 5. CUSTOM NON-INTRUSIVE TOAST MESSAGE BOX (No alert/confirm)          -->
+  <!-- ===================================================================== -->
+  <div
+    id="toast-box"
+    role="status"
+    aria-live="polite"
+    class="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl bg-ink text-canvas text-sm font-medium shadow-2xl border border-canvas/10 flex items-center gap-3 opacity-0 translate-y-4 pointer-events-none"
+  >
+    <span class="w-2 h-2 rounded-full bg-accent"></span>
+    <span id="toast-message">Navigated</span>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 6. GSAP ANIMATION & INTERACTION SCRIPT                                -->
+  <!-- ===================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      try {
+        // DOM References
+        const dotTrigger = document.getElementById('dot-trigger');
+        const labelTrigger = document.getElementById('label-trigger');
+        const heroDemoBtn = document.getElementById('hero-demo-btn');
+        const headerCta = document.getElementById('header-cta');
+        const magneticWrap = document.getElementById('magnetic-wrap');
+        const dotPulseRing = document.getElementById('dot-pulse-ring');
+        const dotCore = document.getElementById('dot-core');
+        const closeLine1 = document.getElementById('close-line-1');
+        const closeLine2 = document.getElementById('close-line-2');
+        const dotExpander = document.getElementById('dot-expander');
+        const navOverlay = document.getElementById('nav-overlay');
+        const labelMenu = document.getElementById('label-menu');
+        const labelClose = document.getElementById('label-close');
+        const brandWordmark = document.getElementById('brand-wordmark');
+        const navLinks = document.querySelectorAll('.nav-link-text');
+        const overlayMeta = document.querySelectorAll('.overlay-meta');
+        const navPreviewDesc = document.getElementById('nav-preview-desc');
+        const viewportIndicator = document.getElementById('viewport-indicator');
+        const toastBox = document.getElementById('toast-box');
+        const toastMessage = document.getElementById('toast-message');
+
+        // State Variables
+        let isOpen = false;
+        let menuTl = null;
+        let toastTween = null;
+
+        /**
+         * Calculates exact position of the left-side dot and the precise scale
+         * needed for the circular expander to completely cover all four corners
+         * of the current viewport.
+         */
+        function getExpanderMetrics() {
+          const rect = dotTrigger.getBoundingClientRect();
+          const baseSize = rect.width || 44;
+          const centerX = rect.left + baseSize / 2;
+          const centerY = rect.top + baseSize / 2;
+
+          // Farthest distance from dot center to any viewport corner
+          const farthestX = Math.max(centerX, window.innerWidth - centerX);
+          const farthestY = Math.max(centerY, window.innerHeight - centerY);
+          const maxRadius = Math.hypot(farthestX, farthestY);
+
+          // Required scale with a 6% safety buffer for crisp corner coverage
+          const requiredScale = (maxRadius / (baseSize / 2)) * 1.06;
+
+          return {
+            left: rect.left,
+            top: rect.top,
+            size: baseSize,
+            requiredScale,
+          };
+        }
+
+        /**
+         * Positions the circular expander directly underneath the dot trigger
+         * and builds (or rebuilds) the master GSAP timeline.
+         */
+        function buildMenuTimeline() {
+          const metrics = getExpanderMetrics();
+
+          // Update subtle viewport debug indicator in footer
+          if (viewportIndicator) {
+            viewportIndicator.textContent = `${window.innerWidth} × ${window.innerHeight}px`;
+          }
+
+          // Anchor the expander element directly over the dot's coordinates
+          gsap.set(dotExpander, {
+            left: metrics.left,
+            top: metrics.top,
+            width: metrics.size,
+            height: metrics.size,
+          });
+
+          // Preserve progress if rebuilding during resize
+          const prevProgress = menuTl ? menuTl.progress() : 0;
+          if (menuTl) {
+            menuTl.kill();
+          }
+
+          // Set clean initial states before constructing timeline
+          gsap.set(navLinks, { yPercent: 115, opacity: 0 });
+          gsap.set(overlayMeta, { y: 20, opacity: 0 });
+          gsap.set(closeLine1, { rotation: 0, scaleX: 0, opacity: 0 });
+          gsap.set(closeLine2, { rotation: 0, scaleX: 0, opacity: 0 });
+          gsap.set(labelMenu, { yPercent: 0, opacity: 1 });
+          gsap.set(labelClose, { yPercent: 0, opacity: 0 });
+
+          // Master GSAP Timeline
+          menuTl = gsap.timeline({
+            paused: true,
+            defaults: { ease: 'expo.inOut' },
+            onStart: () => {
+              document.body.style.overflow = 'hidden';
+            },
+            onReverseComplete: () => {
+              document.body.style.overflow = '';
+              gsap.set(navOverlay, { visibility: 'hidden', pointerEvents: 'none' });
+              gsap.set(dotExpander, { opacity: 0 });
+            },
+          });
+
+          // 1. Make expander visible & scale smoothly from the dot to fill the entire viewport
+          menuTl
+            .set(dotExpander, { opacity: 1, scale: 1, force3D: true }, 0)
+            .to(
+              dotExpander,
+              {
+                scale: metrics.requiredScale,
+                duration: 0.92,
+                ease: 'expo.inOut',
+                force3D: true,
+              },
+              0
+            )
+
+            // 2. Fade out ambient pulse ring & morph dot button into inverted close button
+            .to(
+              dotPulseRing,
+              {
+                opacity: 0,
+                scale: 0.8,
+                duration: 0.25,
+                ease: 'power2.out',
+              },
+              0
+            )
+            .to(
+              dotTrigger,
+              {
+                backgroundColor: '#F5F4F0',
+                duration: 0.45,
+                ease: 'power3.inOut',
+              },
+              0.15
+            )
+            .to(
+              dotCore,
+              {
+                scale: 0,
+                opacity: 0,
+                duration: 0.22,
+                ease: 'power2.in',
+              },
+              0.08
+            )
+            .to(
+              [closeLine1, closeLine2],
+              {
+                opacity: 1,
+                scaleX: 1,
+                duration: 0.35,
+                ease: 'power3.out',
+              },
+              0.32
+            )
+            .to(
+              closeLine1,
+              { rotation: 45, duration: 0.4, ease: 'back.out(1.7)' },
+              0.35
+            )
+            .to(
+              closeLine2,
+              { rotation: -45, duration: 0.4, ease: 'back.out(1.7)' },
+              0.35
+            )
+
+            // 3. Slide Menu/Close label & invert right-side header colors cleanly
+            .to(
+              labelMenu,
+              { yPercent: -100, opacity: 0, duration: 0.4, ease: 'power3.inOut' },
+              0.15
+            )
+            .to(
+              labelClose,
+              { yPercent: -100, opacity: 1, duration: 0.4, ease: 'power3.inOut' },
+              0.18
+            )
+            .to(
+              brandWordmark,
+              { color: '#F5F4F0', duration: 0.4, ease: 'power2.inOut' },
+              0.22
+            )
+            .to(
+              headerCta,
+              {
+                color: '#F5F4F0',
+                borderColor: 'rgba(245, 244, 240, 0.22)',
+                backgroundColor: 'rgba(245, 244, 240, 0.06)',
+                duration: 0.4,
+                ease: 'power2.inOut',
+              },
+              0.22
+            )
+
+            // 4. Enable overlay interaction & stagger-reveal editorial navigation links
+            .set(
+              navOverlay,
+              { visibility: 'visible', pointerEvents: 'auto' },
+              0.42
+            )
+            .to(
+              navLinks,
+              {
+                yPercent: 0,
+                opacity: 1,
+                duration: 0.78,
+                stagger: 0.065,
+                ease: 'power4.out',
+                force3D: true,
+              },
+              0.44
+            )
+
+            // 5. Stagger-reveal right-hand preview card & bottom metadata
+            .to(
+              overlayMeta,
+              {
+                y: 0,
+                opacity: 1,
+                duration: 0.65,
+                stagger: 0.07,
+                ease: 'power3.out',
+              },
+              0.56
+            );
+
+          // Restore timeline state if window resized while open
+          if (isOpen || prevProgress > 0) {
+            menuTl.progress(isOpen ? 1 : prevProgress);
+          }
+        }
+
+        /**
+         * Opens or closes the expanding header dot overlay.
+         */
+        function toggleMenu(forceState) {
+          const nextState = typeof forceState === 'boolean' ? forceState : !isOpen;
+          if (nextState === isOpen) return;
+
+          isOpen = nextState;
+          dotTrigger.setAttribute('aria-expanded', String(isOpen));
+
+          if (isOpen) {
+            // Re-sync coordinates right before expanding in case of scroll/layout shifts
+            const metrics = getExpanderMetrics();
+            gsap.set(dotExpander, { left: metrics.left, top: metrics.top });
+            menuTl.timeScale(1).play();
+          } else {
+            // Slightly snappier reverse feels ultra-responsive
+            menuTl.timeScale(1.25).reverse();
+          }
+        }
+
+        /**
+         * Shows a sleek, non-blocking toast notification for interactive feedback.
+         */
+        function showToast(text) {
+          if (toastTween) toastTween.kill();
+          toastMessage.textContent = text;
+          toastTween = gsap.timeline();
+          toastTween
+            .to(toastBox, {
+              opacity: 1,
+              y: 0,
+              duration: 0.35,
+              ease: 'power3.out',
+            })
+            .to(toastBox, {
+              opacity: 0,
+              y: 12,
+              duration: 0.3,
+              delay: 2.2,
+              ease: 'power2.in',
+            });
+        }
+
+        /**
+         * Subtle Magnetic Hover Effect for the top-left dot (Pointer devices only).
+         */
+        function initMagneticDot() {
+          const isFinePointer = window.matchMedia('(pointer: fine)').matches;
+          if (!isFinePointer) return;
+
+          const xTo = gsap.quickTo(dotTrigger, 'x', { duration: 0.45, ease: 'power3.out' });
+          const yTo = gsap.quickTo(dotTrigger, 'y', { duration: 0.45, ease: 'power3.out' });
+
+          magneticWrap.addEventListener('mousemove', (e) => {
+            const rect = magneticWrap.getBoundingClientRect();
+            const relX = e.clientX - (rect.left + rect.width / 2);
+            const relY = e.clientY - (rect.top + rect.height / 2);
+            xTo(relX * 0.32);
+            yTo(relY * 0.32);
+          });
+
+          magneticWrap.addEventListener('mouseleave', () => {
+            xTo(0);
+            yTo(0);
+          });
+        }
+
+        /**
+         * Initial Hero Entrance Choreography on page load.
+         */
+        function playHeroEntrance() {
+          gsap.from('.hero-reveal', {
+            y: 30,
+            opacity: 0,
+            duration: 0.9,
+            stagger: 0.1,
+            ease: 'power4.out',
+            clearProps: 'transform',
+          });
+        }
+
+        // Event Listeners
+        dotTrigger.addEventListener('click', () => toggleMenu());
+        labelTrigger.addEventListener('click', () => toggleMenu());
+        heroDemoBtn.addEventListener('click', () => toggleMenu(true));
+
+        headerCta.addEventListener('click', () => {
+          if (!isOpen) {
+            toggleMenu(true);
+          } else {
+            showToast('Inquiries open for Q4 2026 projects');
+          }
+        });
+
+        // Escape key smoothly collapses the expanded dot
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && isOpen) {
+            toggleMenu(false);
+          }
+        });
+
+        // Navigation Item Hover Preview & Click Collapse
+        document.querySelectorAll('.nav-item-btn').forEach((btn) => {
+          btn.addEventListener('mouseenter', () => {
+            const desc = btn.getAttribute('data-desc');
+            if (desc && navPreviewDesc.textContent !== desc) {
+              gsap.fromTo(
+                navPreviewDesc,
+                { opacity: 0, y: 6 },
+                { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+              );
+              navPreviewDesc.textContent = desc;
+            }
+          });
+
+          btn.addEventListener('click', () => {
+            const section = btn.getAttribute('data-section');
+            toggleMenu(false);
+            setTimeout(() => {
+              showToast(`Selected "${section}" section`);
+            }, 420);
+          });
+        });
+
+        // Social Links Feedback
+        document.querySelectorAll('.social-link').forEach((link) => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast(`Opening ${link.textContent.trim()} profile`);
+          });
+        });
+
+        // Debounced Window Resize Handler for exact full-viewport coverage
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            buildMenuTimeline();
+          }, 120);
+        });
+
+        // Initialize on DOM Ready
+        window.addEventListener('load', () => {
+          buildMenuTimeline();
+          initMagneticDot();
+          playHeroEntrance();
+        });
+      } catch (err) {
+        console.error('GSAP Header Dot initialization error:', err);
+      }
+    })();
+  </script>
+</body>
+</html>

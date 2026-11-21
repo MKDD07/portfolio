@@ -1,0 +1,9 @@
+# Backups & archives
+backups/
+*.zip
+
+# System & thumbnails
+Thumbs.db
+desktop.ini
+.DS_Store
+.thumbnails/
