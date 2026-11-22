@@ -11,13 +11,14 @@
  *   loadeddata, loadedmetadata, ended, seeked, timeupdate, error
  */
 class FrameSequence {
-  constructor(canvas, folder, totalFrames, fps = 24, filename = frame => 'frame_' + String(frame).padStart(4, '0') + '.webp') {
+  constructor(canvas, folder, totalFrames, fps = 24, filename = frame => 'frame_' + String(frame).padStart(4, '0') + '.webp', loop = false) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this._folder = folder;
     this._totalFrames = totalFrames;
     this._fps = fps;
     this._filename = filename;
+    this.loop = loop;
     this._images = new Array(totalFrames);
     this._loaded = 0;
     this._frame = 0;
@@ -75,6 +76,13 @@ class FrameSequence {
     const advance = delta * this.playbackRate * this._fps;
     const next = this._frame + advance;
     if (next >= this._totalFrames - 1) {
+      if (this.loop) {
+        this._frame = next % (this._totalFrames - 1);
+        this._drawCurrent();
+        this._emit('timeupdate');
+        this._rafId = requestAnimationFrame(t => this._tick(t));
+        return;
+      }
       this._frame = this._totalFrames - 1;
       this._drawCurrent();
       this.pause();

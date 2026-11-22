@@ -7,10 +7,21 @@
   <meta name="theme-color" content="#101010">
   <title>Mohit Kataria — Design Portfolio &amp; Résumé</title>
   <script>if (matchMedia('(prefers-reduced-motion: no-preference)').matches) document.documentElement.classList.add('intro-loading'); addEventListener('load', () => document.documentElement.classList.remove('intro-loading'), { once: true });</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="poster.css">
   <link rel="stylesheet" href="assets/header-menu.css">
+  <link rel="stylesheet" href="assets/swiss-loader.css">
+  <link rel="stylesheet" href="assets/swiss-footer.css">
+  <link rel="stylesheet" href="assets/oil-fluid.css">
+  <script defer src="assets/three.min.js"></script>
   <script defer src="assets/gsap.min.js"></script>
+  <script defer src="assets/CustomEase.min.js"></script>
+  <script defer src="assets/swiss-loader.js"></script>
+  <script defer src="assets/swiss-footer.js"></script>
+  <script defer src="assets/oil-fluid.js"></script>
   <script defer src="assets/header-menu.js"></script>
   <script defer src="assets/SplitText.min.js"></script>
   <script defer src="assets/ScrollTrigger.min.js"></script>
@@ -24,6 +35,73 @@
 </head>
 
 <body>
+  <!-- Interactive WebGL Oil-Slick Pointer Canvas & Surface Reactive FX -->
+  <svg id="fluid-svg-defs" aria-hidden="true" style="position:fixed;width:0;height:0;pointer-events:none;overflow:hidden;">
+    <defs>
+      <filter id="fluid-surface-warp" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence id="fluid-fe-turb" type="turbulence" baseFrequency="0.015 0.015" numOctaves="2" result="warpNoise" seed="3" />
+        <feDisplacementMap id="fluid-fe-disp" in="SourceGraphic" in2="warpNoise" scale="0" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+  <div id="fluid-surface-fx" aria-hidden="true">
+    <div class="fluid-caustic-spotlight"></div>
+    <canvas id="fluid-ripple-canvas"></canvas>
+  </div>
+  <canvas id="fluid-canvas" aria-label="Interactive WebGL oil-slick pointer simulation"></canvas>
+
+  <!-- ==================== SWISS WEBGL LOADER SCREEN ==================== -->
+  <canvas id="webgl-intro" aria-hidden="true"></canvas>
+  <section
+    id="loader-hud"
+    aria-label="Loading portfolio experience"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="0"
+  >
+    <div class="hud-top-bar">
+      <div class="mask-clip">
+        <span class="mask-word hud-corner">MK &mdash; PORTFOLIO</span>
+      </div>
+      <div class="mask-clip text-right">
+        <span class="mask-word hud-corner">GURGAON, IN &middot; 28.45&deg;N</span>
+      </div>
+    </div>
+    <div class="hud-center-stage">
+      <div class="orbital-stage">
+        <svg class="orbital-svg" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+          <circle cx="120" cy="120" r="116" stroke="rgba(255,255,255,0.22)" stroke-width="1" />
+          <circle id="orbitalStroke" cx="120" cy="120" r="116" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" />
+        </svg>
+        <div class="mask-clip hud-center-wrap">
+          <div class="odometer" aria-hidden="true">
+            <div id="odoHundredsCol" class="odo-col odo-hundreds">
+              <div id="odoHundredsTrack" class="odo-track">
+                <span class="odo-digit">0</span>
+                <span class="odo-digit">1</span>
+              </div>
+            </div>
+            <div class="odo-col">
+              <div id="odoTensTrack" class="odo-track"></div>
+            </div>
+            <div class="odo-col">
+              <div id="odoOnesTrack" class="odo-track"></div>
+            </div>
+            <span class="odo-percent">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hud-bottom-bar">
+      <div class="status-window hud-status-wrap">
+        <span id="status-0" class="status-item">CALIBRATING GRID</span>
+        <span id="status-1" class="status-item">LOADING SHADERS</span>
+        <span id="status-2" class="status-item">READY</span>
+      </div>
+    </div>
+  </section>
+
   <a class="skip" href="#profile">Skip introduction</a>
   <a class="portfolio-envelope" href="#contact" aria-label="Go to contact" inert>
     <span class="portfolio-envelope-note" aria-hidden="true"></span>
@@ -275,9 +353,9 @@
     <div class="chapter" id="skills">
       <section class="page paper">
         <div class="skills-surface">
-          <canvas class="skills-climb skills-climb-top" width="720" height="1280"
-            data-seq="assets/webp-video/Person_climbing_webp" data-frames="158" aria-hidden="true"></canvas>
-          <canvas class="skills-climb skills-climb-bottom" width="720" height="1280" aria-hidden="true"></canvas>
+          <canvas class="skills-climb skills-climb-top" width="1280" height="720"
+            data-seq="assets/webp-video/Riding_cycle" data-frames="192" aria-hidden="true"></canvas>
+          <canvas class="skills-climb skills-climb-bottom" width="1280" height="720" aria-hidden="true"></canvas>
         <div class="content wide">
           <div class="skills-heading">
             <p class="kicker">Skills &amp; tools</p>
@@ -346,18 +424,186 @@
         </figure>
       </section>
     </div>
-    <div class="chapter" id="contact">
-      <section class="page contact">
-        <div class="content wide">
-          <p class="kicker">Contact · Gurgaon, India</p>
-          <h2>Get in <em>touch.</em></h2><a class="email" href="mailto:mkmkataria@gmail.com">mkmkataria@gmail.com ↗</a>
-          <p><a href="tel:+917827232156">+91 78272 32156</a></p>
-          <footer><a href="assets/Mohit_Resume.pdf" download>Download résumé ↓</a><a href="#intro">Back to top ↑</a>
-          </footer>
+    <div class="chapter editorial-footer-wrap" id="contact">
+      <!-- Ambient Print Lighting & Tactile Noise -->
+      <div class="editorial-footer-glow" aria-hidden="true"></div>
+      <svg class="editorial-footer-grain" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <filter id="editorialNoise">
+          <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#editorialNoise)" />
+      </svg>
+
+      <footer class="page contact editorial-footer">
+        <!-- 3D Character on bottom left -->
+        <canvas class="footer-character" aria-hidden="true"></canvas>
+
+        <!-- 2. MAIN ASYMMETRIC SPLIT CONTENT -->
+        <div class="footer-main-grid">
+          <!-- Left Column (8 cols): Primary Editorial Focus -->
+          <div class="footer-col-left">
+            <h2 class="hero-headline select-none" aria-label="Get in touch.">
+              <span class="mask-line">
+                <span class="mask-word gsap-hero-word">Get&nbsp;in</span>
+              </span>
+              <span class="mask-line">
+                <span class="mask-word gsap-hero-word hero-headline-serif">&nbsp;touch.</span>
+              </span>
+            </h2>
+
+            <div class="footer-contact-block">
+              <!-- Email Row -->
+              <div class="email-row gsap-contact-item">
+                <a
+                  href="mailto:mkmkataria@gmail.com"
+                  class="email-cta-text"
+                  aria-label="Send an email to mkmkataria@gmail.com"
+                >
+                  <span>mkmkataria@gmail.com</span>
+                  <span class="arrow-box" aria-hidden="true">
+                    <span class="arrow-primary">&#8599;</span>
+                    <span class="arrow-secondary">&#8599;</span>
+                  </span>
+                </a>
+              </div>
+
+              <!-- Phone Row -->
+              <div class="phone-row gsap-contact-item">
+                <a
+                  id="footerPhoneLink"
+                  href="tel:+917827232156"
+                  data-copy="+91 78272 32156"
+                  class="phone-link"
+                  aria-label="Call or copy phone number +91 78272 32156"
+                >
+                  <span>+91 78272 32156</span>
+                </a>
+                <span class="phone-hint">
+                  (Click to call &middot; copies number)
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column (4 cols): Studio Note & Social Links -->
+          <aside class="footer-col-right">
+            <div class="studio-note gsap-right-item">
+              <p class="studio-kicker">STUDIO NOTE</p>
+              <p class="studio-desc">
+                Designing and engineering thoughtful digital experiences. Let&rsquo;s build something memorable.
+              </p>
+            </div>
+
+            <nav aria-label="Social profiles" class="social-nav">
+              <ul>
+                <li class="gsap-social-item">
+                  <a
+                    href="https://www.linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-row"
+                  >
+                    <span class="social-label">
+                      <span class="social-num">01</span>
+                      <span>LinkedIn</span>
+                    </span>
+                    <span class="arrow-box" aria-hidden="true">
+                      <span class="arrow-primary">&#8599;</span>
+                      <span class="arrow-secondary">&#8599;</span>
+                    </span>
+                  </a>
+                </li>
+                <li class="gsap-social-item">
+                  <a
+                    href="https://github.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-row"
+                  >
+                    <span class="social-label">
+                      <span class="social-num">02</span>
+                      <span>GitHub</span>
+                    </span>
+                    <span class="arrow-box" aria-hidden="true">
+                      <span class="arrow-primary">&#8599;</span>
+                      <span class="arrow-secondary">&#8599;</span>
+                    </span>
+                  </a>
+                </li>
+                <li class="gsap-social-item">
+                  <a
+                    href="https://dribbble.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-row"
+                  >
+                    <span class="social-label">
+                      <span class="social-num">03</span>
+                      <span>Dribbble</span>
+                    </span>
+                    <span class="arrow-box" aria-hidden="true">
+                      <span class="arrow-primary">&#8599;</span>
+                      <span class="arrow-secondary">&#8599;</span>
+                    </span>
+                  </a>
+                </li>
+                <li class="gsap-social-item">
+                  <a
+                    href="https://x.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="social-row"
+                  >
+                    <span class="social-label">
+                      <span class="social-num">04</span>
+                      <span>X / Twitter</span>
+                    </span>
+                    <span class="arrow-box" aria-hidden="true">
+                      <span class="arrow-primary">&#8599;</span>
+                      <span class="arrow-secondary">&#8599;</span>
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </aside>
         </div>
-      </section>
+
+        <!-- 3. DIVIDER & BOTTOM UTILITY BAR -->
+        <div class="footer-bottom-wrap">
+          <div id="footerDivider" class="animated-divider" aria-hidden="true"></div>
+
+          <div class="footer-bottom-bar">
+            <!-- Center: Monospace Copyright -->
+            <div class="gsap-bottom-item copyright-text">
+              &copy; 2026 MK Kataria
+            </div>
+
+            <!-- Right: Back to Top -->
+            <div class="gsap-bottom-item">
+              <button
+                id="footerBackToTopBtn"
+                type="button"
+                class="magnetic-btn btn-top"
+              >
+                <span>Back to top</span>
+                <span class="top-arrow" aria-hidden="true">&uarr;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   </main>
+
+  <!-- GSAP Animated Toast Notification -->
+  <div id="toastContainer" role="status" aria-live="polite">
+    <div class="toast-pill">
+      <span class="toast-dot"></span>
+      <span id="toastMessage">Copied to clipboard</span>
+    </div>
+  </div>
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 :root {
-  --red: #E60000;
+  --red: #FF482F;
   --ink: #101010;
   --paper: #f3f0e9;
   --profile-backdrop: #fbdac7;
@@ -1461,17 +1461,17 @@ html:not(.sequenced) .parahar-video { max-width: 7rem }
   display: block;
   position: absolute;
   right: clamp(1rem, 3vw, 3rem);
-  width: clamp(4.25rem, 9vw, 10rem);
+
+  width: clamp(14rem, 26vw, 28rem);
   height: auto;
-  aspect-ratio: 9 / 16;
-  mix-blend-mode: darken;
-  filter: brightness(1.085);
+  aspect-ratio: 16 / 9;
+  mix-blend-mode: multiply;
   transition: translate 60ms linear;
   pointer-events: none;
 }
 
-.skills-climb-top { top: 0; right: auto; left: clamp(1rem, 3vw, 3rem); scale: 1 -1; }
-.skills-climb-bottom { bottom: 0; scale: -1 1; }
+.skills-climb-top { top: -9px; right: auto; left: clamp(1rem, 3vw, 3rem); }
+.skills-climb-bottom { bottom: -9px; }
 
 .sequenced #skills::after {
   height: calc(var(--stage-height) + 205svh);
@@ -1484,7 +1484,7 @@ html:not(.sequenced) .parahar-video { max-width: 7rem }
 
 @media (max-width: 850px) {
   .sequenced .skills-surface { padding: 8rem var(--edge); }
-  .sequenced .skills-climb { width: 4.25rem; }
+  .sequenced .skills-climb { width: clamp(8rem, 38vw, 15rem); }
 }
 
 @media (max-width: 510px) {

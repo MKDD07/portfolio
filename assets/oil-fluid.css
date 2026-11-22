@@ -1,0 +1,64 @@
+/* =====================================================================
+   VISCOUS FLUIDITY // WEBGL RED OIL SLICK POINTER & SURFACE INTERACTION
+   ===================================================================== */
+
+/* Full-screen subtle WebGL pointer canvas */
+#fluid-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 25;
+  display: block;
+  pointer-events: none;
+  touch-action: none;
+  opacity: 0.76;
+}
+
+/* Surface reaction layer: caustics spotlight & liquid surface ripples */
+#fluid-surface-fx {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 24;
+  pointer-events: none;
+  overflow: hidden;
+  mix-blend-mode: multiply;
+}
+
+.fluid-caustic-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    var(--fluid-sheen-radius, 260px) circle at var(--fluid-px, 50%) var(--fluid-py, 50%),
+    rgba(255, 72, 47, 0.20) 0%,
+    rgba(255, 110, 50, 0.08) 42%,
+    transparent 72%
+  );
+  opacity: var(--fluid-sheen-opacity, 0);
+  transition: opacity 0.16s cubic-bezier(0.2, 0.8, 0.4, 1);
+  will-change: opacity, background;
+}
+
+#fluid-ripple-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+
+/* Kinetic surface inertia & liquid refraction on page content */
+.page > .content,
+.hero .content,
+.skills-surface {
+  transform: translate3d(calc(var(--fluid-vx, 0) * 1.2px), calc(var(--fluid-vy, 0) * 1.2px), 0)
+             rotateX(calc(var(--fluid-tilt-x, 0deg) * 0.3))
+             rotateY(calc(var(--fluid-tilt-y, 0deg) * 0.3));
+  transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.35, 1);
+  will-change: transform;
+  filter: url(#fluid-surface-warp);
+}

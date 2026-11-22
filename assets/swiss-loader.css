@@ -1,0 +1,202 @@
+/* ==========================================================================
+   SWISS WEBGL LOADER SCREEN
+   ========================================================================== */
+
+:root {
+  --swiss-red: #FF482F;
+  --swiss-font-serif: 'Instrument Serif', Georgia, serif;
+  --swiss-font-mono: 'Space Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+body.intro-locked {
+  overflow: hidden !important;
+  height: 100dvh !important;
+}
+
+/* 1. WEBGL LIQUID CURTAIN CANVAS */
+#webgl-intro {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 9998;
+  display: block;
+  pointer-events: auto;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* 2. SWISS LOADER HUD OVERLAY */
+#loader-hud {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 9999;
+  color: #FFFFFF;
+  padding: clamp(1.25rem, 3.8vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--swiss-font-mono);
+  box-sizing: border-box;
+}
+
+#loader-hud * {
+  box-sizing: border-box;
+}
+
+/* Top Corner Micro-Labels */
+.hud-top-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--swiss-font-mono);
+  font-size: clamp(10px, 1.1vw, 12px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Center Stage */
+.hud-center-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto 0;
+}
+
+/* Orbital SVG Ring + Rolling Vertical Odometer */
+.orbital-stage {
+  position: relative;
+  width: clamp(210px, 34vw, 310px);
+  height: clamp(210px, 34vw, 310px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbital-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+/* Rolling Vertical Odometer Digits */
+.odometer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--swiss-font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(3.75rem, 8.5vw, 6.5rem);
+  line-height: 1;
+  height: 1em;
+  overflow: hidden;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+}
+
+.odo-col {
+  display: inline-flex;
+  flex-direction: column;
+  height: 1em;
+  overflow: hidden;
+  position: relative;
+}
+
+.odo-col.odo-hundreds {
+  width: 0;
+  opacity: 0;
+  transition: width 0.32s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.28s ease;
+}
+
+.odo-col.odo-hundreds.is-active {
+  width: 0.44em;
+  opacity: 1;
+}
+
+.odo-track {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.odo-digit {
+  height: 1em;
+  line-height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 0.54em;
+}
+
+.odo-percent {
+  font-family: var(--swiss-font-mono);
+  font-style: normal;
+  font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+  opacity: 0.72;
+  margin-left: 0.25rem;
+  align-self: flex-start;
+  margin-top: 0.28em;
+}
+
+/* Status Line Mask */
+.hud-bottom-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--swiss-font-mono);
+  font-size: clamp(10px, 1.1vw, 12px);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.status-window {
+  height: 1.4em;
+  overflow: hidden;
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  min-width: 210px;
+}
+
+.status-item {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  will-change: transform, opacity;
+}
+
+/* Masked Reveal Primitives */
+.mask-clip {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  padding-right: 0.04em;
+}
+
+.mask-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}

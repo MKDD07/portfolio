@@ -1,9 +1,10 @@
 import {
-  AdditiveBlending, AmbientLight, AnimationMixer, Box3, CanvasTexture, DirectionalLight, Group,
-  LoopOnce, OrthographicCamera, PerspectiveCamera, PointLight, Scene,
+  AdditiveBlending, AmbientLight, AnimationClip, AnimationMixer, Box3, CanvasTexture, DirectionalLight, Group,
+  LoopOnce, LoopRepeat, OrthographicCamera, PerspectiveCamera, PointLight, Quaternion, Scene,
   Sprite, SpriteMaterial, SRGBColorSpace, Vector3, WebGLRenderer
 } from './three/three.module.js';
 import { GLTFLoader } from './three/GLTFLoader.js';
+import { FBXLoader } from './three/FBXLoader.js';
 import { clone } from './three/SkeletonUtils.js';
 
 const loader = new GLTFLoader();
@@ -208,7 +209,7 @@ function createSpellGlow(red) {
   glow.addColorStop(0, '#fff');
   glow.addColorStop(.045, '#fff8eb');
   glow.addColorStop(.105, '#ffbdab');
-  glow.addColorStop(.19, '#ff4f39');
+  glow.addColorStop(.19, '#FF482F');
   glow.addColorStop(.32, red);
   glow.addColorStop(.57, `color-mix(in srgb, ${red} 28%, transparent)`);
   glow.addColorStop(1, 'transparent');
@@ -241,4 +242,209 @@ function measureAnimationBounds(model, mixer, action, duration, poses = Array.fr
   action.time = 0;
   mixer.update(0);
   return bounds;
+}
+
+let sharedLookingClip;
+export async function loadLookingClip() {
+  if (sharedLookingClip) return sharedLookingClip;
+
+  // 1. Try pre-computed JSON animation clip (instant parse & guaranteed clean tracks)
+  try {
+    const res = await fetch(new URL('./3d/looking.animation.json', import.meta.url).href);
+    if (res.ok) {
+      const json = await res.json();
+      sharedLookingClip = AnimationClip.parse(json);
+      return sharedLookingClip;
+    }
+  } catch (e) {
+    console.warn('JSON clip fetch error, falling back to FBX:', e);
+  }
+
+  // 2. Fallback to dynamic FBX loader
+  try {
+    const fbxLoader = new FBXLoader();
+    const fbx = await fbxLoader.loadAsync(new URL('./3d/Looking.fbx', import.meta.url).href);
+    if (fbx.animations && fbx.animations.length > 0) {
+      const clip = fbx.animations[0];
+      clip.name = 'Looking';
+
+      // Clean track names: remove colons so Three.js PropertyBinding matches sanitized node names
+      for (const track of clip.tracks) {
+        track.name = track.name.replace(/:/g, '');
+      }
+
+      // Root bone compensation for Blender glTF armature rotation (+90 around X)
+      const qInv = new Quaternion(-0.7071068, 0, 0, 0.7071068);
+      const hipsPos = clip.tracks.find(t => t.name === 'mixamorigHips.position');
+      if (hipsPos) {
+        for (let i = 0; i < hipsPos.values.length; i += 3) {
+          const v = new Vector3(hipsPos.values[i], hipsPos.values[i + 1], hipsPos.values[i + 2]);
+          v.applyQuaternion(qInv);
+          hipsPos.values[i] = v.x;
+          hipsPos.values[i + 1] = v.y;
+          hipsPos.values[i + 2] = v.z;
+        }
+      }
+
+      const hipsQuat = clip.tracks.find(t => t.name === 'mixamorigHips.quaternion');
+      if (hipsQuat) {
+        for (let i = 0; i < hipsQuat.values.length; i += 4) {
+          const q = new Quaternion(hipsQuat.values[i], hipsQuat.values[i + 1], hipsQuat.values[i + 2], hipsQuat.values[i + 3]);
+          q.premultiply(qInv);
+          hipsQuat.values[i] = q.x;
+          hipsQuat.values[i + 1] = q.y;
+          hipsQuat.values[i + 2] = q.z;
+          hipsQuat.values[i + 3] = q.w;
+        }
+      }
+
+      sharedLookingClip = clip;
+      return clip;
+    }
+  } catch (err) {
+    console.warn('Direct FBX load failed:', err);
+  }
+
+  return null;
+}
+
+export async function loadFooterCharacter(canvas, { useLooking = true, animationIndex = 2 } = {}) {
+  const renderer = new WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = SRGBColorSpace;
+
+  const scene = new Scene();
+  const camera = new PerspectiveCamera(35, 1, 0.1, 50);
+
+  const ambient = new AmbientLight(0xffffff, 1.8);
+  const keyLight = new DirectionalLight(0xfff0dd, 2.2);
+  keyLight.position.set(-2, 4, 4);
+  const rimLight = new DirectionalLight(0xff482f, 2.8);
+  rimLight.position.set(2, 2, -3);
+  scene.add(ambient, keyLight, rimLight);
+
+  let model, animations;
+  try {
+    const character = await loadSharedCharacter();
+    model = clone(character.scene);
+    animations = character.animations;
+  } catch (err) {
+    renderer.dispose();
+    throw err;
+  }
+
+  model.traverse(obj => {
+    if (obj.isSkinnedMesh) obj.frustumCulled = false;
+  });
+
+  let clip = null;
+  if (useLooking) {
+    try {
+      clip = await loadLookingClip();
+    } catch (_) {}
+  }
+  if (!clip) {
+    clip = animations[animationIndex] || animations[2];
+  }
+  const mixer = new AnimationMixer(model);
+  const action = clip ? mixer.clipAction(clip) : null;
+  if (action) {
+    action.setLoop(LoopRepeat);
+    action.play();
+  }
+
+  const bounds = action ? measureAnimationBounds(model, mixer, action, clip.duration)
+    : new Box3().setFromObject(model);
+  const size = bounds.getSize(new Vector3());
+  const center = bounds.getCenter(new Vector3());
+
+  const subject = new Group();
+  const pivot = new Group();
+  pivot.position.set(-center.x, -bounds.min.y, -center.z);
+  pivot.add(model);
+  subject.add(pivot);
+  subject.rotation.y = 0.45;
+  scene.add(subject);
+
+  let running = false;
+  let frame = 0;
+  let previousTime = 0;
+
+  function resize() {
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    if (!width || !height) return;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height, false);
+
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const fitHeightDist = (size.y * 1.15) / (2 * Math.tan(fovRad / 2));
+    const fitWidthDist = (size.x * 1.15) / (2 * Math.tan(fovRad / 2) * camera.aspect);
+    const cameraDist = Math.max(fitHeightDist, fitWidthDist, 3.2);
+
+    camera.position.set(0, size.y * 0.52, cameraDist);
+    camera.lookAt(0, size.y * 0.48, 0);
+
+    renderer.render(scene, camera);
+  }
+
+  function tick(now) {
+    if (!running) return;
+    if (previousTime) {
+      const dt = Math.min(0.05, (now - previousTime) / 1000);
+      mixer.update(dt);
+    }
+    previousTime = now;
+    renderer.render(scene, camera);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    previousTime = 0;
+    frame = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    running = false;
+    if (frame) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    }
+  }
+
+  const observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) {
+      resize();
+      start();
+    } else {
+      stop();
+    }
+  }, { threshold: 0.05 });
+  observer.observe(canvas);
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  return {
+    resize,
+    start,
+    stop,
+    dispose() {
+      stop();
+      observer.disconnect();
+      window.removeEventListener('resize', resize);
+      mixer.stopAllAction();
+      mixer.uncacheRoot(model);
+      const skeletons = new Set();
+      model.traverse(obj => {
+        if (obj.skeleton) skeletons.add(obj.skeleton);
+      });
+      for (const sk of skeletons) sk.dispose();
+      renderer.dispose();
+    }
+  };
 }
