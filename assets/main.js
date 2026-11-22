@@ -846,7 +846,7 @@ function animateForcePanels(chapter, followingChapter) {
     },
     scrollTrigger: {
       trigger: chapter,
-      start: () => 'top ' + parseFloat(page.style.getPropertyValue('--pin-top')),
+      start: 'top top',
       endTrigger: followingChapter,
       end: 'top bottom',
       scrub: true,
@@ -972,7 +972,7 @@ function animateOperationsMark(canvas, chapter, followingChapter) {
 
   const scene = ScrollTrigger.create({
     trigger: chapter,
-    start: () => 'top ' + parseFloat(chapter.querySelector('.page').style.getPropertyValue('--pin-top')),
+    start: 'top top',
     endTrigger: followingChapter,
     end: 'top bottom',
     onRefresh: trigger => resize(trigger.progress),
@@ -1076,13 +1076,6 @@ if (window.gsap && window.ScrollTrigger) {
       const stageHeight = root.clientHeight - mast.offsetHeight;
       root.style.setProperty('--stage-height', stageHeight + 'px');
 
-      for (const chapter of chapters) {
-        const panel = chapter.querySelector('.page') || chapter;
-        // A tall chapter scrolls to its last line before it holds for the handoff.
-        const pinTop = Math.min(mast.offsetHeight, root.clientHeight - panel.offsetHeight);
-        panel.style.setProperty('--pin-top', pinTop + 'px');
-      }
-
       // Measure the exact period "." in Profile h2 to anchor Kalakriti's radial ink expand
       const dot = punctuation.getBoundingClientRect();
       const box = profile.getBoundingClientRect();
@@ -1103,9 +1096,7 @@ if (window.gsap && window.ScrollTrigger) {
         dot.top -
         box.top +
         baseline -
-        (glyph.actualBoundingBoxAscent - glyph.actualBoundingBoxDescent) / 2 +
-        parseFloat(profile.style.getPropertyValue('--pin-top')) -
-        mast.offsetHeight;
+        (glyph.actualBoundingBoxAscent - glyph.actualBoundingBoxDescent) / 2;
 
       catalogue.style.setProperty('--ink-origin', `${x}px ${y}px`);
       inkTravel = Math.hypot(Math.max(x, catalogue.offsetWidth - x), Math.max(y, catalogue.offsetHeight - y)) / 0.84;
@@ -1514,6 +1505,7 @@ if (window.gsap && window.ScrollTrigger) {
 
     ScrollTrigger.create({
       trigger: profileChapter,
+      start: 'top top',
       endTrigger: profileChapter.nextElementSibling,
       end: 'top bottom',
       onUpdate: scrollProfile,
@@ -1566,7 +1558,7 @@ if (window.gsap && window.ScrollTrigger) {
           defaults: { duration: 0.75, ease: 'sine.inOut' },
           scrollTrigger: {
             trigger: chapter,
-            start: () => 'top ' + parseFloat(next.style.getPropertyValue('--pin-top')),
+            start: 'top top',
             endTrigger: chapters[index + 1],
             end: 'top bottom',
             scrub: true,
@@ -1830,7 +1822,7 @@ if (window.gsap && window.ScrollTrigger) {
 
         const characterScroll = ScrollTrigger.create({
           trigger: chapter,
-          start: () => 'top ' + parseFloat(next.style.getPropertyValue('--pin-top')),
+          start: 'top top',
           endTrigger: chapters[index + 1],
           end: 'top bottom',
           onEnter: loadModel,
@@ -1891,7 +1883,7 @@ if (window.gsap && window.ScrollTrigger) {
               xPercent: -50,
               yPercent: -50,
               x: () => field.clientWidth / 2,
-              y: () => field.clientHeight / 2 + parseFloat(previous.style.getPropertyValue('--pin-top')) - mast.offsetHeight,
+              y: () => field.clientHeight / 2,
               width: diameter,
               height: diameter,
               rotation: 0
@@ -2066,7 +2058,7 @@ if (window.gsap && window.ScrollTrigger) {
           onUpdate: () => queueClimbingFrames(playhead.progress),
           scrollTrigger: {
             trigger: chapter,
-            start: () => 'top ' + parseFloat(next.style.getPropertyValue('--pin-top')),
+            start: 'top top',
             endTrigger: chapters[index + 1],
             end: 'top 110%',
             scrub: 0.85,

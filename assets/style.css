@@ -225,7 +225,7 @@ footer a:hover,
 
 .sequenced .page {
   position: sticky;
-  top: var(--pin-top, var(--mast))
+  top: var(--mast)
 }
 
 /* ScrollTrigger must reposition instantly during measurement; Lenis eases user input. */

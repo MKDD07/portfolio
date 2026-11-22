@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="assets/swiss-loader.css">
   <link rel="stylesheet" href="assets/swiss-footer.css">
   <link rel="stylesheet" href="assets/oil-fluid.css">
+  <link rel="stylesheet" href="assets/cloth-reel.css">
   <script defer src="assets/three.min.js"></script>
   <script defer src="assets/gsap.min.js"></script>
   <script defer src="assets/CustomEase.min.js"></script>
@@ -30,6 +31,7 @@
   <script defer src="assets/frame-sequence.js"></script>
   <script defer src="assets/matter.min.js"></script>
   <script defer src="assets/force-balls.js"></script>
+  <script defer src="assets/cloth-reel.js"></script>
   <script defer src="assets/main.js"></script>
 
 </head>
@@ -424,6 +426,105 @@
         </figure>
       </section>
     </div>
+    <!-- =====================================================================
+         KALAKRITI WORK — Interactive 3D Cloth Reel Section
+         ===================================================================== -->
+    <div class="chapter" id="cloth-reel">
+      <section class="page cloth-reel-page" aria-label="Kalakriti Work Cloth Reel">
+        <!-- Warm editorial peach radial wash backdrop -->
+        <div class="cloth-backdrop-wash" aria-hidden="true"></div>
+
+        <!-- Collapsible Cloth Physics Control Drawer -->
+        <aside id="cloth-info-panel" class="cloth-info-panel" aria-label="Cloth physics controls">
+          <div class="cloth-panel-header">
+            <div class="cloth-panel-header-title">
+              <span class="cloth-dot-indicator"></span>
+              <h3 id="panel-title" class="cloth-panel-title">Cloth Physics</h3>
+            </div>
+            <button id="btn-close-panel" type="button" class="cloth-btn-close">Close</button>
+          </div>
+          <p id="panel-desc" class="cloth-panel-desc">
+            Scroll, swipe, or drag horizontally to bend the vermilion cloth strip. Real-time surface normals catch warm peach highlights and deep ink fold shadows.
+          </p>
+          <div class="cloth-controls-space">
+            <div>
+              <div class="cloth-slider-row">
+                <span>Bend Intensity</span>
+                <span id="bend-val" class="val">1.0x</span>
+              </div>
+              <input id="slider-bend" type="range" min="0.2" max="2.2" step="0.1" value="1.0" class="cloth-editorial-range" />
+            </div>
+            <div>
+              <div class="cloth-slider-row">
+                <span>Wave Amplitude</span>
+                <span id="wave-val" class="val">1.0x</span>
+              </div>
+              <input id="slider-wave" type="range" min="0.0" max="2.2" step="0.1" value="1.0" class="cloth-editorial-range" />
+            </div>
+            <div class="cloth-grid-buttons">
+              <button id="btn-autoscroll" type="button" aria-pressed="false" class="cloth-grid-btn">
+                <span id="dot-autoscroll" class="dot"></span>
+                <span>Auto-Scroll</span>
+              </button>
+              <button id="btn-wireframe" type="button" aria-pressed="false" class="cloth-grid-btn">
+                <span id="dot-wireframe" class="dot"></span>
+                <span>Wireframe</span>
+              </button>
+            </div>
+            <button id="btn-impulse" type="button" class="cloth-action-btn">Send Cloth Impulse</button>
+            <button id="btn-preview-outro" type="button" class="cloth-dark-btn">Play Outro Scene</button>
+          </div>
+        </aside>
+
+        <!-- WebGL 3D Cloth Stage -->
+        <div class="cloth-webgl-container" role="region" aria-label="Interactive 3D Cloth Portfolio Strip"></div>
+
+        <!-- Preserved DOM Source Strip (Screen reader accessible, live-synced) -->
+        <div class="cloth-work-strip webgl-active">
+          <a class="profile-work-track" href="#kalakriti" aria-label="See Kalakriti work">
+            <span class="profile-work-card" data-title="KALAKRITI CATALOGUE" data-caption="Traditional Indian motifs, art, and editorial typography"><img src="assets/kalakriti/catalogue.webp" alt="Kalakriti Indian art editorial catalogue" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="PACKAGING" data-caption="Block-printed textile inspired artisan box design"><img src="assets/kalakriti/packaging.webp" alt="Kalakriti artisan craft packaging" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="EXHIBITION" data-caption="Exhibition design, spatial curation, and crafts"><img src="assets/kalakriti/exhibition.webp" alt="Kalakriti gallery exhibition space" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="KALAKRITI CATALOGUE" data-caption="Traditional Indian motifs, art, and editorial typography"><img src="assets/kalakriti/catalogue.webp" alt="Kalakriti Indian art editorial catalogue" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="PACKAGING" data-caption="Block-printed textile inspired artisan box design"><img src="assets/kalakriti/packaging.webp" alt="Kalakriti artisan craft packaging" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="EXHIBITION" data-caption="Exhibition design, spatial curation, and crafts"><img src="assets/kalakriti/exhibition.webp" alt="Kalakriti gallery exhibition space" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="KALAKRITI CATALOGUE" data-caption="Traditional Indian motifs, art, and editorial typography"><img src="assets/kalakriti/catalogue.webp" alt="Kalakriti Indian art editorial catalogue" crossorigin="anonymous"></span>
+            <span class="profile-work-card" data-title="PACKAGING" data-caption="Block-printed textile inspired artisan box design"><img src="assets/kalakriti/packaging.webp" alt="Kalakriti artisan craft packaging" crossorigin="anonymous"></span>
+          </a>
+        </div>
+
+
+
+
+        <!-- GSAP Outro Scene Overlay -->
+        <div id="cloth-outro-scene" class="cloth-scene-overlay pointer-events-none opacity-0" aria-hidden="true" aria-label="Outro scene" style="opacity: 0;">
+          <div class="cloth-curtain-top"></div>
+          <div class="cloth-curtain-bottom"></div>
+          <div class="cloth-outro-content">
+            <div class="cloth-clip-reveal">
+              <span class="cloth-outro-kicker">END OF REEL</span>
+            </div>
+            <div class="cloth-clip-reveal">
+              <h3 class="cloth-outro-title">CRAFTED IN MOTION<span class="text-red" style="color: var(--red, #FF482F);">.</span></h3>
+            </div>
+            <div class="cloth-outro-divider"></div>
+            <div class="cloth-clip-reveal">
+              <p class="cloth-outro-sub">
+                Traditional Indian craft motifs, tactile packaging, and spatial exhibitions brought to life.
+              </p>
+            </div>
+            <button id="btn-replay" type="button" class="cloth-btn-replay">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              <span>Replay Reel</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <div class="chapter editorial-footer-wrap" id="contact">
       <!-- Ambient Print Lighting & Tactile Noise -->
       <div class="editorial-footer-glow" aria-hidden="true"></div>
